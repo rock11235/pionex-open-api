@@ -1,0 +1,23 @@
+openapi_bot.yaml
+  def78e3c77377afb 1672-1676,1727-1731
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "757c8a7d8ccba42a8b4690c38be8c5f3e3adfc9f",
+  "prompts": {
+    "def78e3c77377afb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e73343b-8bfc-4ab6-ad41-8a1e548eca59",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "suqihai <suqihai@bituniverse.org>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 7,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
