@@ -1,0 +1,37 @@
+openapi_bot.yaml
+  s_6ae792811a7470::t_4c20a4f7beae54 2095-2191
+  s_6ae792811a7470::t_ee15fe4b5b89a5 1989-1995,1999-2005
+  s_6ae792811a7470::t_db2cb2ed475285 1894-1916
+  s_6ae792811a7470::t_a7140cd5164409 417-492
+  s_6a1aeb8d5a6d99::t_2e036ace92e145 1686-1692
+  s_6ae792811a7470::t_a68e2c715a9a44 1117-1121,1124-1126
+  s_6ae792811a7470::t_413ed0bcadeb17 73-74
+  s_6ae792811a7470::t_49b30057ed7a91 1996-1998,2006
+  s_6ae792811a7470::t_7a5d23d844790c 1933-1936
+  s_6ae792811a7470::t_d70a02c75732fa 1960-1969
+  s_6a1aeb8d5a6d99::t_0981ccce057f49 2072-2090
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "87ad8869c0c8439d14dd8a11132d7088b370d292",
+  "prompts": {},
+  "sessions": {
+    "s_6a1aeb8d5a6d99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "99258688-caa9-4c60-b7c4-3cd7339e4827",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "suqihai <suqihai@bituniverse.org>"
+    },
+    "s_6ae792811a7470": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7f7e6dd5-0fa7-4f99-8fb5-57a44937cca4",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "suqihai <suqihai@bituniverse.org>"
+    }
+  }
+}
