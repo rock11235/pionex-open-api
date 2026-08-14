@@ -84,6 +84,14 @@ info:
     - `POST /api/v1/bot/orders/futuresGrid/adjustParams` — Adjust futures grid (add investment / modify range)
     - `POST /api/v1/bot/orders/futuresGrid/reduce` — Reduce futures grid position
     - `POST /api/v1/bot/orders/futuresGrid/cancel` — Cancel futures grid order
+    - `POST /api/v1/bot/orders/futuresGrid/pauseCheck` — Check futures grid pause (dry-run)
+    - `POST /api/v1/bot/orders/futuresGrid/pause` — Pause futures grid order
+    - `POST /api/v1/bot/orders/futuresGrid/resumeCheck` — Check futures grid resume (dry-run)
+    - `POST /api/v1/bot/orders/futuresGrid/resume` — Resume futures grid order
+    - `POST /api/v1/bot/orders/futuresGrid/addMarginCheck` — Check futures grid add margin (dry-run)
+    - `POST /api/v1/bot/orders/futuresGrid/addMargin` — Add margin to futures grid order
+    - `POST /api/v1/bot/orders/futuresGrid/reduceMarginCheck` — Check futures grid reduce margin (dry-run)
+    - `POST /api/v1/bot/orders/futuresGrid/reduceMargin` — Reduce margin of futures grid order
     - `POST /api/v1/bot/orders/spotGrid/create` — Create spot grid order
     - `POST /api/v1/bot/orders/spotGrid/adjustParams` — Adjust spot grid parameters
     - `POST /api/v1/bot/orders/spotGrid/investIn` — Add investment to spot grid
@@ -485,6 +493,314 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/ReduceCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/pauseCheck:
+    post:
+      tags: [Futures Grid]
+      summary: Check futures grid pause (dry-run)
+      description: |
+        Validate whether a futures grid order can be paused (`immediate` or `conditional` mode)
+        and return current plus post-trigger estimated liquidation prices without executing.
+        Does not accept `openPrice`; the backend uses the live market price.
+        `triggerPausePriceUp` / `triggerPausePriceDown` are independent — set either or both.
+        Weight: 1.
+      operationId: pauseFuturesGridCheck
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridPauseCheckRequest'
+      responses:
+        '200':
+          description: |
+            Check result. On success: `result=true` with estimate data.
+            On business validation failure: `result=false` with `BOT_INVALID_ARGUMENT` code and reason message.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridPauseCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/pause:
+    post:
+      tags: [Futures Grid]
+      summary: Pause futures grid order
+      description: |
+        Pause a running futures grid order. Runs the same validation as `pauseCheck`, then
+        executes asynchronously. Once paused the grid stops auto-refilling orders while the
+        position is retained; `immediate` mode takes effect at the live market price.
+        Does not return a `status` field (async processing).
+        Weight: 1.
+      operationId: pauseFuturesGrid
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridPauseRequest'
+      responses:
+        '200':
+          description: Pause accepted (async).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridPauseResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/resumeCheck:
+    post:
+      tags: [Futures Grid]
+      summary: Check futures grid resume (dry-run)
+      description: |
+        Validate whether a paused futures grid order can be resumed and return the estimated
+        liquidation prices after resuming, without executing. Order must be in `paused` state.
+        Weight: 1.
+      operationId: resumeFuturesGridCheck
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridResumeRequest'
+      responses:
+        '200':
+          description: |
+            Check result. On success: `result=true` with estimate data.
+            On business validation failure: `result=false` with `BOT_INVALID_ARGUMENT` code and reason message.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridResumeCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/resume:
+    post:
+      tags: [Futures Grid]
+      summary: Resume futures grid order
+      description: |
+        Resume a paused futures grid order. Runs the same validation as `resumeCheck`, then
+        executes. After resuming the grid restarts auto-refilling and the liquidation price
+        moves with the market.
+        Weight: 1.
+      operationId: resumeFuturesGrid
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridResumeRequest'
+      responses:
+        '200':
+          description: Resume accepted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridResumeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/addMarginCheck:
+    post:
+      tags: [Futures Grid]
+      summary: Check futures grid add margin (dry-run)
+      description: |
+        Validate whether the add-margin amount is valid and return the estimated liquidation
+        prices before and after the change, without executing.
+        Does not accept `openPrice`; the backend uses the live market price.
+        Weight: 1.
+      operationId: addMarginFuturesGridCheck
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridMarginCheckRequest'
+      responses:
+        '200':
+          description: |
+            Check result. On success: `result=true` with estimate data.
+            On business validation failure: `result=false` with `BOT_INVALID_ARGUMENT` code and reason message.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridMarginCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/addMargin:
+    post:
+      tags: [Futures Grid]
+      summary: Add margin to futures grid order
+      description: |
+        Transfer margin into a futures grid order. Runs the same validation as `addMarginCheck`,
+        then executes asynchronously. Directly affects available balance and the order's
+        liquidation price — a funds operation, call with care.
+        Does not return a `status` field (async processing).
+        Weight: 1.
+      operationId: addMarginFuturesGrid
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridMarginTransferRequest'
+      responses:
+        '200':
+          description: Add margin accepted (async).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridMarginTransferResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/reduceMarginCheck:
+    post:
+      tags: [Futures Grid]
+      summary: Check futures grid reduce margin (dry-run)
+      description: |
+        Validate whether the reduce-margin amount is valid (subject to the `maxAmount` hard limit)
+        and return the estimated liquidation prices before and after the change, without executing.
+        Exceeding `maxAmount` returns `checkResult=false` with reason `EXCEEDS_MAX_AMOUNT`.
+        Weight: 1.
+      operationId: reduceMarginFuturesGridCheck
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridMarginCheckRequest'
+      responses:
+        '200':
+          description: |
+            Check result. On success: `result=true` with estimate data.
+            On business validation failure: `result=false` with `BOT_INVALID_ARGUMENT` code and reason message.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridMarginCheckResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/bot/orders/futuresGrid/reduceMargin:
+    post:
+      tags: [Futures Grid]
+      summary: Reduce margin of futures grid order
+      description: |
+        Transfer margin out of a futures grid order. Runs the same validation as
+        `reduceMarginCheck` (including the `maxAmount` check), then executes asynchronously.
+        Directly reduces the order's available margin and raises liquidation risk — a funds
+        operation, call with care.
+        Does not return a `status` field (async processing).
+        Weight: 1.
+      operationId: reduceMarginFuturesGrid
+      security:
+        - apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/Timestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuturesGridMarginTransferRequest'
+      responses:
+        '200':
+          description: Reduce margin accepted (async).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FuturesGridMarginTransferResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2188,6 +2504,199 @@ components:
         slippage:
           type: string
           description: Recommended slippage
+
+    FuturesGridPauseCheckRequest:
+      type: object
+      required: [buOrderId, mode]
+      properties:
+        buOrderId:
+          type: string
+          description: Bot order ID
+        mode:
+          type: string
+          enum: [immediate, conditional]
+          description: "Pause mode: `immediate` = pause now; `conditional` = pause on trigger price"
+        triggerPausePriceUp:
+          type: string
+          description: Upward trigger price (when mode=conditional). Optional; set either direction or both.
+        triggerPausePriceDown:
+          type: string
+          description: Downward trigger price (when mode=conditional). Optional.
+
+    FuturesGridPauseCheckResponse:
+      type: object
+      description: Pause check result with estimate data
+      properties:
+        checkResult:
+          type: boolean
+          description: Whether the order can be paused
+        reason:
+          type: string
+          description: "Failure reason when checkResult is false (fixed constant, e.g. FORBIDDEN_COPY_BOT_SUBORDER / FORBIDDEN_FULLY_HEDGING / ORDER_NOT_RUNNING)"
+        estimateLiquidationPriceUp:
+          type: string
+          description: Current upward liquidation price
+        estimateLiquidationPriceDown:
+          type: string
+          description: Current downward liquidation price
+        estimateLiquidationPriceUpAfterTriggerUp:
+          type: string
+          description: Returned when triggerPausePriceUp is set — upward liquidation price after the upward pause triggers
+        estimateLiquidationPriceDownAfterTriggerUp:
+          type: string
+          description: Returned when triggerPausePriceUp is set — downward liquidation price after the upward pause triggers
+        estimateLiquidationPriceUpAfterTriggerDown:
+          type: string
+          description: Returned when triggerPausePriceDown is set — upward liquidation price after the downward pause triggers
+        estimateLiquidationPriceDownAfterTriggerDown:
+          type: string
+          description: Returned when triggerPausePriceDown is set — downward liquidation price after the downward pause triggers
+
+    FuturesGridPauseRequest:
+      type: object
+      required: [buOrderId, mode]
+      properties:
+        buOrderId:
+          type: string
+          description: Bot order ID
+        mode:
+          type: string
+          enum: [immediate, conditional]
+          description: "Pause mode: `immediate` = pause now (backend uses live market price, not client-supplied); `conditional` = pause on trigger price"
+        stopProfitEnabled:
+          type: boolean
+          description: Whether to keep take-profit active while paused
+        stopLossEnabled:
+          type: boolean
+          description: Whether to keep stop-loss active while paused
+        triggerPausePriceUp:
+          type: string
+          description: Upward trigger price. Set either direction or both.
+        triggerPausePriceDown:
+          type: string
+          description: Downward trigger price.
+
+    FuturesGridPauseResponse:
+      type: object
+      description: Pause execution result (no status field; processed asynchronously)
+      properties:
+        stopLossEnabled:
+          type: boolean
+          description: Effective stop-loss retention state
+        stopProfitEnabled:
+          type: boolean
+          description: Effective take-profit retention state
+        triggerPausePriceUp:
+          type: string
+          description: Effective upward trigger price
+        triggerPausePriceDown:
+          type: string
+          description: Effective downward trigger price
+
+    FuturesGridResumeRequest:
+      type: object
+      required: [buOrderId]
+      properties:
+        buOrderId:
+          type: string
+          description: Bot order ID
+
+    FuturesGridResumeCheckResponse:
+      type: object
+      description: Resume check result with estimate data
+      properties:
+        checkResult:
+          type: boolean
+          description: Whether the order can be resumed
+        reason:
+          type: string
+          description: "Failure reason when checkResult is false (fixed constant, e.g. FORBIDDEN_COPY_BOT_SUBORDER / FORBIDDEN_FULLY_HEDGING / ORDER_NOT_PAUSED)"
+        estimateLiquidationPriceUp:
+          type: string
+          description: Estimated upward liquidation price after resuming
+        estimateLiquidationPriceDown:
+          type: string
+          description: Estimated downward liquidation price after resuming
+
+    FuturesGridResumeResponse:
+      type: object
+      description: Resume execution result
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: RPC return code
+        message:
+          type: string
+          description: RPC return message
+
+    FuturesGridMarginCheckRequest:
+      type: object
+      required: [buOrderId, amount]
+      description: Shared by addMarginCheck and reduceMarginCheck; the direction is determined by the route, not a request field.
+      properties:
+        buOrderId:
+          type: string
+          description: Bot order ID
+        amount:
+          type: number
+          description: Margin amount to add / reduce (decimal, serialized as an unquoted number)
+
+    FuturesGridMarginCheckResponse:
+      type: object
+      description: Add/reduce margin check result with estimate data
+      properties:
+        checkResult:
+          type: boolean
+          description: Whether the amount is valid
+        reason:
+          type: string
+          description: "Failure reason when checkResult is false (fixed constant, e.g. FORBIDDEN_COPY_BOT_SUBORDER / FORBIDDEN_FULLY_HEDGING / EXCEEDS_MAX_AMOUNT)"
+        estimateLiquidationPriceUpBefore:
+          type: string
+          description: Estimated upward liquidation price before the change
+        estimateLiquidationPriceDownBefore:
+          type: string
+          description: Estimated downward liquidation price before the change
+        estimateLiquidationPriceUpAfter:
+          type: string
+          description: Estimated upward liquidation price after the change
+        estimateLiquidationPriceDownAfter:
+          type: string
+          description: Estimated downward liquidation price after the change
+        maxAmount:
+          type: string
+          description: "Returned by reduceMarginCheck only — max reducible margin = min(existing extra margin, total equity − 1.05× used margin, margin account balance)"
+
+    FuturesGridMarginTransferRequest:
+      type: object
+      required: [buOrderId, coin, amount]
+      description: Shared by addMargin and reduceMargin; the direction (in/out) is fixed server-side by the route and not exposed as a request field.
+      properties:
+        buOrderId:
+          type: string
+          description: Bot order ID
+        coin:
+          type: string
+          description: Transfer currency
+        amount:
+          type: number
+          description: Margin amount to add / reduce (decimal)
+
+    FuturesGridMarginTransferResponse:
+      type: object
+      description: Add/reduce margin execution result (no status field; processed asynchronously)
+      properties:
+        transferId:
+          type: string
+          description: Transfer record ID
+        code:
+          type: integer
+          format: int32
+          description: RPC return code
+        message:
+          type: string
+          description: RPC return message
 
     # =========================================================================
     # Spot Grid schemas
