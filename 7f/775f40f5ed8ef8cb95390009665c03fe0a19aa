@@ -1,0 +1,21 @@
+openapi_bot.yaml
+  s_5b04a3ddf69241::t_feaa9df34d9a13 100
+  s_5b04a3ddf69241::t_85a77a6e12a2cf 815-1008
+  s_5b04a3ddf69241::t_4eae9438592b07 3098-3180
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7f775f40f5ed8ef8cb95390009665c03fe0a19aa",
+  "prompts": {},
+  "sessions": {
+    "s_5b04a3ddf69241": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0856fd9d-4ad3-4c54-a689-60e7775b3aed",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "suqihai <suqihai@bituniverse.org>"
+    }
+  }
+}
