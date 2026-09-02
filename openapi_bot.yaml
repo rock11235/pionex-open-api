@@ -842,20 +842,20 @@ paths:
         **Required**; unlike the App, an empty value is NOT accepted (no implicit
         fallback to `price`):
 
-        | `stop_type` | `value` means | `value` range | `limit_price` |
-        |---|---|---|---|
-        | `price` | Trigger price | must be `> 0` | ignored |
-        | `price_limit` | Trigger price; order is placed as a **limit** order at `limit_price` when hit | must be `> 0` | required, `> 0` |
-        | `profit_amount` | Profit/loss **amount** in the settlement currency | may be `0` or **negative** (a negative amount = a loss threshold) | ignored |
-        | `profit_ratio` | Profit/loss **ratio** (e.g. `0.5` = +50%, `-0.2` = −20%) | may be `0` or **negative** | ignored |
+        | `stop_type` | `value` means | `limit_price` |
+        |---|---|---|
+        | `price` | Trigger price | ignored |
+        | `price_limit` | Trigger price; order is placed as a **limit** order at `limit_price` when hit | required |
+        | `profit_amount` | Profit/loss **amount** in the settlement currency | ignored |
+        | `profit_ratio` | Profit/loss **ratio** (e.g. `0.5` = +50%, `-0.2` = −20%) | ignored |
 
         **Clearing a trigger**: pass `value` as an empty string `""` for that item to
         remove the previously set take-profit / stop-loss.
 
-        **`value` validation**: when `value` is non-empty it must be a valid decimal.
-        For `price` / `price_limit` it must be `> 0`; for `profit_amount` / `profit_ratio`
-        `0` and negative values are allowed (a stop-loss expressed as a negative
-        ratio/amount is meaningful).
+        **`value` validation**: when `value` is non-empty it only needs to be a valid
+        decimal — the endpoint does not enforce a positive value. `0` and negative values
+        are accepted (a stop-loss expressed as a negative `profit_ratio` / `profit_amount`
+        is meaningful).
 
         **Neutral grid (`no_trend`) upper stop-loss**: for a neutral grid, a stop-loss can
         additionally set an **upper** threshold above the grid range using
@@ -887,7 +887,6 @@ paths:
         | `invalid type: {v}, must be one of stop_loss/stop_profit` | `type` not in the allow-list |
         | `invalid stop_type: {v}, must be one of price/price_limit/profit_amount/profit_ratio` | `stop_type` missing or not in the allow-list |
         | `invalid amount: {v}` | `value` / `limit_price` / `limit_high_price` is not a valid decimal |
-        | `invalid value: {v}, must be positive` | `value > 0` required for `price` / `price_limit` |
         | `invalid loss_stop_sell_model: {v}` | `loss_stop_sell_model` not `TO_QUOTE` / `TO_USDT` |
         | `invalid profit_stop_sell_model: {v}` | `profit_stop_sell_model` not `TO_QUOTE` / `TO_USDT` |
         | `order is disable change tp` | The order forbids changing take-profit / stop-loss |
@@ -3118,8 +3117,9 @@ components:
           type: string
           description: |
             Trigger threshold, interpreted per `stop_type`. Empty string `""` clears the
-            trigger. For `price` / `price_limit` must be `> 0`; for `profit_amount` /
-            `profit_ratio` may be `0` or negative (e.g. `-0.2` = a −20% stop-loss ratio).
+            trigger. When non-empty it only needs to be a valid decimal — not enforced to
+            be positive; `0` and negative values are accepted (e.g. `-0.2` = a −20%
+            stop-loss ratio).
         limit_price:
           type: string
           description: Limit price used to close the position when `stop_type=price_limit`. Required in that case.
